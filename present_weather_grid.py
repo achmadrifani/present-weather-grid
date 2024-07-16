@@ -3,7 +3,7 @@
 # Script to generate present weather in grid format
 # (30/3) First script
 # (31/3) Add send ftp function
-# (16/7) Modify config file to yaml
+# (16/7) Modify config file to yaml, export in netcdf format
 
 # Author: Achmad Rifani
 # Created : 30/3/2024
@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 from ftplib import FTP, error_perm
 import os
 import yaml
+import xarray as xr
 
 
 def read_config(file_path):
@@ -31,6 +32,7 @@ def read_config(file_path):
     for key, value in config.items():
         print(key, value)
         globals()[key] = value
+
 
 def get_latest_radar():
     """
@@ -256,15 +258,54 @@ def main():
         "dim_time": f"{radar_time:%Y-%m-%dT%H:%M:%SZ}"
     }
 
-    out_filename = f"present_weather_grid_{radar_time:%Y%m%d%H%M%S}.tif"
-    with rasterio.open(f'{OUT_DIR}/{out_filename}', 'w', **metadata) as dst:
+    print("Creating tif file")
+    tif_filename = f"present_weather_grid_{radar_time:%Y%m%d%H%M%S}.tif"
+    with rasterio.open(f'{OUT_DIR}/{tif_filename}', 'w', **metadata) as dst:
         dst.write(weather_grid, 1)
         
     with rasterio.open(f'{OUT_DIR}/present_weather_grid_latest.tif', 'w', **metadata) as dst:
         dst.write(weather_grid, 1)
-    print(f"File created: {OUT_DIR}/present_weather_grid_{radar_time:%Y%m%d%H%M%S}.tif")
+    print(f"TIF File created: {OUT_DIR}/present_weather_grid_{radar_time:%Y%m%d%H%M%S}.tif")
 
-    return out_filename
+    # Create a netcdf file
+    print("Creating netcdf file")
+    nc_filename = f"present_weather_grid_{radar_time:%Y%m%d%H%M%S}.nc"
+    ds = xr.Dataset(
+        {
+            "wx": (["lat", "lon"], weather_grid),
+        },
+        coords={
+            "lat": radar_lats,
+            "lon": radar_lons,
+            "time": radar_time,
+        },
+        attrs={
+            "description": "Present weather grid",
+            "longName": "Present weather category",
+            "institution": "BMKG",
+            "units": "category",
+            "crs": "EPSG:4326",
+            "productTime": f"{radar_time:%Y-%m-%dT%H:%M:%SZ}",
+            "Nx": width,
+            "Ny": height,
+        }
+    )
+
+    # Define compression settings
+    compression = {
+        "zlib": True,
+        "complevel": 5  # Level of compression from 1 (lowest) to 9 (highest)
+    }
+
+    # Specify the encoding for each variable
+    encoding = {
+        "wx": compression
+    }
+
+    ds.to_netcdf(f"{OUT_DIR}/{nc_filename}", encoding=encoding, engine='netcdf4')
+    print(f"NC File created: {OUT_DIR}/present_weather_grid_{radar_time:%Y%m%d%H%M%S}.tif")
+
+    return tif_filename, nc_filename
 
 
 if __name__ == "__main__":
@@ -273,19 +314,35 @@ if __name__ == "__main__":
     config_file_path = 'pwx_grid_config.yml'
     read_config(config_file_path)
 
-    out_filename = main()
-    local_file = f"{OUT_DIR}/{out_filename}"
+    tif_filename, nc_filename = main()
 
-    for addr in FTP_SEND:
-        TYPE = addr.get("TYPE")
-        HOST = addr.get("HOST")
-        PORT = addr.get("PORT")
-        USER = addr.get("USER")
-        PASS = addr.get("PASS")
-        REMOTE_DIR = addr.get("REMOTE_DIR")
-        REMOTE_FILE = addr.get("REMOTE_FILE")
-        if TYPE == "ftp":
-            if REMOTE_FILE:
-                remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
-                send_ftp(HOST, USER, PASS, local_file, remote_file)
+    if FTP_SEND_TIFF:
+        for addr in FTP_SEND_TIFF:
+            TYPE = addr.get("TYPE")
+            HOST = addr.get("HOST")
+            PORT = addr.get("PORT")
+            USER = addr.get("USER")
+            PASS = addr.get("PASS")
+            REMOTE_DIR = addr.get("REMOTE_DIR")
+            REMOTE_FILE = addr.get("REMOTE_FILE")
+            if TYPE == "ftp":
+                if REMOTE_FILE:
+                    local_file = f"{OUT_DIR}/{tif_filename}"
+                    remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
+                    send_ftp(HOST, USER, PASS, local_file, remote_file)
+
+    if FTP_SEND_NC:
+        for addr in FTP_SEND_NC:
+            TYPE = addr.get("TYPE")
+            HOST = addr.get("HOST")
+            PORT = addr.get("PORT")
+            USER = addr.get("USER")
+            PASS = addr.get("PASS")
+            REMOTE_DIR = addr.get("REMOTE_DIR")
+            REMOTE_FILE = addr.get("REMOTE_FILE")
+            if TYPE == "ftp":
+                if REMOTE_FILE:
+                    local_file = f"{OUT_DIR}/{nc_filename}"
+                    remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
+                    send_ftp(HOST, USER, PASS, local_file, remote_file)
 
