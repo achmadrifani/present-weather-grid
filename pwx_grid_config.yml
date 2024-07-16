@@ -1,7 +1,7 @@
 ROOT_DIR: "/home/metpublic"
 TASK_DIR: "TASK_RELEASE/EFAN/present_weather_grid"
-OUT_DIR: "/home/metpublic/TASK_RELEASE/EFAN/present_weather_grid/tif_output"
-DATA_DIR: "/home/metpublic/TASK_RELEASE/EFAN/present_weather_grid/data"
+OUT_DIR: "tif_output"
+DATA_DIR: "data"
 SRC_DIR: ""
 
 API_RADAR: "https://radar.bmkg.go.id:8060/getRadarGeotif?token=19387e71e78522ae4172ec0fda640983b8438c9cfa0ca571623cb69d8327&radar=amandemenForecast&type=latest"
@@ -14,7 +14,7 @@ FTP_SATELIT:
   PASS: "kspcr!@#"
   DATA_DIR: "/himawari_vol/himawari6/others/hima_cor"
 
-FTP_SEND:
+FTP_SEND_TIFF:
   - NAME: "publik"
     TYPE: "ftp"
     HOST: "publik.bmkg.go.id"
@@ -23,3 +23,13 @@ FTP_SEND:
     PASS: "bmkg2303"
     REMOTE_DIR: "data"
     REMOTE_FILE: "present_weather_grid_latest.tif"
+
+FTP_SEND_NC:
+  - NAME: "publik"
+    TYPE: "ftp"
+    HOST: "publik.bmkg.go.id"
+    PORT: "21"
+    USER: "amandemen"
+    PASS: "bmkg2303"
+    REMOTE_DIR: "data"
+    REMOTE_FILE: "present_weather_grid_latest.nc"
