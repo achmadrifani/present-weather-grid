@@ -303,6 +303,7 @@ def main():
     }
 
     ds.to_netcdf(f"{OUT_DIR}/{nc_filename}", encoding=encoding, engine='netcdf4')
+    ds.to_netcdf(f"{OUT_DIR}/present_weather_grid_latest.nc", encoding=encoding, engine='netcdf4')
     print(f"NC File created: {OUT_DIR}/present_weather_grid_{radar_time:%Y%m%d%H%M%S}.tif")
 
     return tif_filename, nc_filename
