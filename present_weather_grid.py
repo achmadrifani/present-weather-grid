@@ -3,6 +3,7 @@
 # Script to generate present weather in grid format
 # (30/3) First script
 # (31/3) Add send ftp function
+# (16/7) Modify config file to yaml
 
 # Author: Achmad Rifani
 # Created : 30/3/2024
@@ -20,8 +21,16 @@ import geopandas as gpd
 from datetime import datetime, timedelta
 from ftplib import FTP, error_perm
 import os
-from present_weather_grid_config import *
+import yaml
 
+
+def read_config(file_path):
+    with open(file_path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    for key, value in config.items():
+        print(key, value)
+        globals()[key] = value
 
 def get_latest_radar():
     """
@@ -260,6 +269,10 @@ def main():
 
 if __name__ == "__main__":
     now = datetime.now()
+
+    config_file_path = 'pwx_grid_config.yml'
+    read_config(config_file_path)
+
     out_filename = main()
     local_file = f"{OUT_DIR}/{out_filename}"
 
