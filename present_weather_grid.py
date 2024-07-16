@@ -3,6 +3,7 @@
 # Script to generate present weather in grid format
 # (30/3) First script
 # (31/3) Add send ftp function
+# (16/7) Modify config file to yaml
 
 # Author: Achmad Rifani
 # Created : 30/3/2024
