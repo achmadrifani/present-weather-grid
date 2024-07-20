@@ -55,8 +55,18 @@ def get_latest_radar():
         radar_time = datetime.strptime(time_str,"%Y%m%d%H%M")
         return radar_data, radar_time
     except Exception as e:
-        print(f"An error occurred while fetching or processing the data: {e}")
-        return None, None
+        print("Fetching latest radar merge data")
+        response = requests.get(API_RADAR_MOSAIC, verify=False)
+        response.raise_for_status()  # Check if the request was successful
+        with rasterio.open(response.json()['file']) as src:
+            radar_data = rioxarray.open_rasterio(src)
+
+        filename = response.json()["file"].split("/")[4]
+        time_str = filename[7:19]
+        radar_time = datetime.strptime(time_str, "%Y%m%d%H%M")
+        return radar_data, radar_time
+        # print(f"An error occurred while fetching or processing the data: {e}")
+        # return None, None
 
 
 def get_latest_ldn():
