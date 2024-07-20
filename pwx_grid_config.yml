@@ -5,6 +5,7 @@ DATA_DIR: "data"
 SRC_DIR: ""
 
 API_RADAR: "https://radar.bmkg.go.id:8060/getRadarGeotif?token=19387e71e78522ae4172ec0fda640983b8438c9cfa0ca571623cb69d8327&radar=amandemenForecast&type=latest"
+API_RADAR_MOSAIC: "https://radar.bmkg.go.id:8060/getRadarGeotif?token=19387e71e78522ae4172ec0fda640983b8438c9cfa0ca571623cb69d8327&radar=amandemenForecastRadarMosaic&type=latest"
 API_LDN: "https://radar.bmkg.go.id:8060/getLatestLD?typeData=1"
 URL_OT: "http://202.90.198.22/IMAGE/HIMA/H09_OT_Indonesia.csv"
 
