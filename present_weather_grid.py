@@ -44,7 +44,7 @@ def get_latest_radar():
         radar_time (datetime): The timestamp of the radar data.
     """
     try:
-        print("Fetching latest radar merge data")
+        print("Fetching latest radar MERGE data")
         response = requests.get(API_RADAR, verify=False)
         response.raise_for_status()  # Check if the request was successful
         with rasterio.open(response.json()['file']) as src:
@@ -55,7 +55,7 @@ def get_latest_radar():
         radar_time = datetime.strptime(time_str,"%Y%m%d%H%M")
         return radar_data, radar_time
     except Exception as e:
-        print("Fetching latest radar merge data")
+        print("Fetching latest radar MOSAIC data")
         response = requests.get(API_RADAR_MOSAIC, verify=False)
         response.raise_for_status()  # Check if the request was successful
         with rasterio.open(response.json()['file']) as src:
@@ -177,6 +177,7 @@ def calculate_wx_grid(radar_data, lg_grid, sat_data_int):
     weather_category = np.full(wx_grid_shape, 9999)
     rdr_data = radar_data[0]
     sat_data = sat_data_int[0]
+    print(wx_grid_shape)
     # determine weather category based on radar data, ld grid, and satellite data
     weather_category[(np.isnan(rdr_data)) & (sat_data >= 21)] = 1
     weather_category[(np.isnan(rdr_data)) & (np.logical_and(sat_data < 21, sat_data >= 0))] = 2
@@ -195,9 +196,9 @@ def calculate_wx_grid(radar_data, lg_grid, sat_data_int):
     return weather_category
 
 
-def send_ftp(host, username, password, local_file, remote_file):
-    print(f"Sending to {host}")
-    with FTP(host) as ftp:
+def send_ftp(host, port, username, password, local_file, remote_file):
+    print(f"Sending to {host}:{port}")
+    with FTP(host, port) as ftp:
         try:
             ftp.login(user=username, passwd=password)
             with open(local_file, 'rb') as file:
@@ -355,5 +356,5 @@ if __name__ == "__main__":
                 if REMOTE_FILE:
                     local_file = f"{OUT_DIR}/{nc_filename}"
                     remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
-                    send_ftp(HOST, USER, PASS, local_file, remote_file)
+                    send_ftp(HOST, PORT, USER, PASS, local_file, remote_file)
 
