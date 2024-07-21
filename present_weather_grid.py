@@ -196,19 +196,35 @@ def calculate_wx_grid(radar_data, lg_grid, sat_data_int):
     return weather_category
 
 
+from ftplib import FTP, error_perm
+
 def send_ftp(host, port, username, password, local_file, remote_file):
+    """
+    Sends a file to an FTP server.
+
+    Args:
+        host (str): The FTP server address.
+        port (int): The FTP server port.
+        username (str): The FTP server username.
+        password (str): The FTP server password.
+        local_file (str): The path to the local file to be uploaded.
+        remote_file (str): The path on the remote server where the file will be uploaded.
+    """
     print(f"Sending to {host}:{port}")
-    with FTP(host, port) as ftp:
+    with FTP() as ftp:
         try:
+            ftp.connect(host, int(port))  # Ensure port is an integer
+            print(f"Logging in as {username}")
             ftp.login(user=username, passwd=password)
             with open(local_file, 'rb') as file:
                 ftp.storbinary("STOR " + remote_file, file)
         except error_perm as e:
-            print(f"Error: {e}")
+            print(f"FTP permission error: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
         else:
             print(f"File '{local_file}' uploaded successfully to '{remote_file}'")
+
 
 
 def main():
@@ -341,7 +357,7 @@ if __name__ == "__main__":
                 if REMOTE_FILE:
                     local_file = f"{OUT_DIR}/{tif_filename}"
                     remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
-                    send_ftp(HOST, USER, PASS, local_file, remote_file)
+                    send_ftp(HOST, PORT, USER, PASS, local_file, remote_file)
 
     if FTP_SEND_NC:
         for addr in FTP_SEND_NC:
