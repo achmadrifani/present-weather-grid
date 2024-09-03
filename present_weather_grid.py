@@ -258,7 +258,6 @@ def send_sftp(host, port, username, password, local_file, remote_file):
         print(f"Unexpected error: {e}")
 
 
-
 def main():
     # Radar
     radar_data, radar_time = get_latest_radar()
