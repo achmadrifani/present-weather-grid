@@ -4,10 +4,11 @@
 # (30/3) First script
 # (31/3) Add send ftp function
 # (16/7) Modify config file to yaml, export in netcdf format
+# (4/9) Add send sftp function
 
 # Author: Achmad Rifani
 # Created : 30/3/2024
-# Updated : 31/3/2024
+# Updated : 4/9/2024
 
 import pandas as pd
 import pickle
@@ -23,6 +24,7 @@ from ftplib import FTP, error_perm
 import os
 import yaml
 import xarray as xr
+import paramiko
 
 
 def read_config(file_path):
@@ -227,6 +229,35 @@ def send_ftp(host, port, username, password, local_file, remote_file):
             print(f"File '{local_file}' uploaded successfully to '{remote_file}'")
 
 
+def send_sftp(host, port, username, password, local_file, remote_file):
+    """
+    Sends a file to a remote server over SFTP.
+
+    Parameters:
+        host (str): The SFTP server's hostname or IP address.
+        port (int): The port on which to connect.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        local_file (str): The path to the local file to be uploaded.
+        remote_file (str): The path on the remote server where the file will be stored.
+    """
+    try:
+        with paramiko.Transport((host, port)) as transport:
+            print(f"Connecting to {host}:{port}")
+            transport.connect(username=username, password=password)
+            with paramiko.SFTPClient.from_transport(transport) as sftp:
+                sftp.put(local_file, remote_file)
+                print(f"File '{local_file}' uploaded successfully to '{remote_file}'")
+    except paramiko.AuthenticationException as e:
+        print(f"Authentication failed: {e}")
+    except paramiko.SSHException as e:
+        print(f"SSH connection error: {e}")
+    except IOError as e:
+        print(f"File error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+
 
 def main():
     # Radar
@@ -373,6 +404,13 @@ if __name__ == "__main__":
                     local_file = f"{OUT_DIR}/{nc_filename}"
                     remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
                     send_ftp(HOST, PORT, USER, PASS, local_file, remote_file)
+            elif TYPE == "sftp":
+                if REMOTE_FILE:
+                    local_file = f"{OUT_DIR}/{nc_filename}"
+                    remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
+                    send_sftp(HOST, int(PORT), USER, PASS, local_file, remote_file)
+            else:
+                print("Invalid FTP type")
 
 
 
