@@ -172,31 +172,32 @@ def create_radius(point):
 
 
 def calculate_wx_grid(radar_data, lg_grid, sat_data_int):
-    # calculating weather category
+    # Calculate the weather category
     wx_grid_shape = radar_data[0].shape
-    weather_category = np.full(wx_grid_shape, 9999)
+    weather_category = np.full(wx_grid_shape, 9999)  # Initialize with default value
     rdr_data = radar_data[0]
     sat_data = sat_data_int[0]
-    print(wx_grid_shape)
-    # determine weather category based on radar data, ld grid, and satellite data
+
+    # Assign weather categories based on the conditions
     weather_category[(np.isnan(rdr_data)) & (sat_data >= 21)] = 1
-    weather_category[(np.isnan(rdr_data)) & (np.logical_and(sat_data < 21, sat_data >= 0))] = 2
+    weather_category[(np.isnan(rdr_data)) & (sat_data < 21) & (sat_data >= 0)] = 2
     weather_category[(np.isnan(rdr_data)) & (sat_data < 0)] = 3
-    weather_category[(np.logical_and(rdr_data > 0, rdr_data <= 0.5)) & (~np.isnan(lg_grid))] = 4
-    weather_category[(np.logical_and(rdr_data > 0, rdr_data <= 0.5)) & np.isnan(lg_grid)] = 4
-    # weather_category[(rdr_data < 1) & (lg_grid != np.nan)] = 80
-    weather_category[(rdr_data >= 0.5) & (rdr_data < 5) & np.isnan(lg_grid)] = 60
-    weather_category[(rdr_data >= 0.5) & (rdr_data < 5) & (~np.isnan(lg_grid))] = 95
+
+    weather_category[(rdr_data > 0) & (rdr_data <= 0.5)] = 4  # Combined condition for simplicity
+
+    weather_category[(rdr_data > 0.5) & (rdr_data < 5) & np.isnan(lg_grid)] = 60
+    weather_category[(rdr_data > 0.5) & (rdr_data < 5) & ~np.isnan(lg_grid)] = 95
+
     weather_category[(rdr_data >= 5) & (rdr_data < 10) & np.isnan(lg_grid)] = 61
-    weather_category[(rdr_data >= 5) & (rdr_data < 10) & (~np.isnan(lg_grid))] = 95
+    weather_category[(rdr_data >= 5) & (rdr_data < 10) & ~np.isnan(lg_grid)] = 95
+
     weather_category[(rdr_data >= 10) & (rdr_data < 20) & np.isnan(lg_grid)] = 63
-    weather_category[(rdr_data >= 10) & (rdr_data < 20) & (~np.isnan(lg_grid))] = 95
+    weather_category[(rdr_data >= 10) & (rdr_data < 20) & ~np.isnan(lg_grid)] = 95
+
     weather_category[(rdr_data >= 20) & np.isnan(lg_grid)] = 63
-    weather_category[(rdr_data >= 20) & (~np.isnan(lg_grid))] = 97
+    weather_category[(rdr_data >= 20) & ~np.isnan(lg_grid)] = 97
+
     return weather_category
-
-
-from ftplib import FTP, error_perm
 
 def send_ftp(host, port, username, password, local_file, remote_file):
     """
@@ -245,7 +246,6 @@ def main():
     # Interpolate data to new coordinates
     sat_bt_c = sat_bt - 273.15
     sat_data_int = sat_bt_c.interp(new_coords, method='linear')
-
     # Create polygon of ldn
     lg_radius = all_lightning.geometry.apply(create_radius)
     radius_df = gpd.GeoDataFrame(lg_radius)
@@ -373,4 +373,6 @@ if __name__ == "__main__":
                     local_file = f"{OUT_DIR}/{nc_filename}"
                     remote_file = f"{REMOTE_DIR}/{REMOTE_FILE}"
                     send_ftp(HOST, PORT, USER, PASS, local_file, remote_file)
+
+
 
